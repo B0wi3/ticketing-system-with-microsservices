@@ -1,0 +1,74 @@
+spring:
+  application:
+    name: 'apigateway'
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: 'http://localhost:8091/realms/ticketing-security-realm'
+
+server:
+  port: 8090
+
+security:
+  excluded:
+    urls: /swagger-ui.html,/swagger-ui/**,/docs/**,/v3/api-docs/**,/swagger-resources/**,/api-docs/**
+
+#Keycloak
+keycloak:
+  auth:
+    jwk-set-uri: 'http://localhost:8091/realms/ticketing-security-realm/protocol/openid-connect/certs'
+
+#OpenAPI
+springdoc:
+  swagger-ui:
+    path: '/swagger-ui.html'
+    urls:
+      - name: Inventory Service
+        url: /docs/inventoryservice/v3/api-docs
+      - name: Booking Service
+        url: /docs/bookingservice/v3/api-docs
+
+  api-docs:
+    path: '/v3/api-docs'
+
+# Actuator
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  endpoint:
+    health:
+      show-details: always
+
+# Resilience4j
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        register-health-indicator: true
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 8
+        failure-rate-threshold: 50
+        minimum-number-of-calls: 4
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 2
+        automatic-transition-from-open-to-half-open-enabled: true
+
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 3s
+
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 2s
